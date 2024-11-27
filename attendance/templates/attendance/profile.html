@@ -1,0 +1,20 @@
+{% extends 'attendance/base.html' %}
+
+{% block title %}Profile - {{ user.username }}{% endblock %}
+
+{% block content %}
+<h2>Profile</h2>
+<div class="profile-info">
+    <p><strong>Username:</strong> {{ user.username }}</p>
+    <p><strong>Name:</strong> {{ user.get_full_name }}</p>
+    <p><strong>Face Registration Status:</strong> 
+        {% if has_face_registered %}
+            <span style="color: green;">Registered</span>
+        {% else %}
+            <span style="color: red;">Not Registered</span>
+            <a href="{% url 'register_face' %}" class="button">Register Face</a>
+        {% endif %}
+    </p>
+</div>
+{% endblock %}
+

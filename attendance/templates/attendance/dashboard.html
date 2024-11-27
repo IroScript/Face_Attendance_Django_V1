@@ -1,0 +1,91 @@
+<!-- templates/attendance/dashboard.html -->
+{% extends 'attendance/base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_head %}
+<style>
+    .status-box {
+        padding: 20px;
+        margin: 10px;
+        border-radius: 5px;
+        text-align: center;
+    }
+    .webcam-container {
+        margin: 20px 0;
+        text-align: center;
+    }
+    #webcam {
+        border: 2px solid #333;
+        border-radius: 5px;
+    }
+    #status {
+        margin: 10px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2>Dashboard</h2>
+
+<div class="status-box">
+    <h3>Today's Status ({{ today|date:"D, d M Y" }})</h3>
+    {% if attendance %}
+        <p>Time In: {{ attendance.time_in|time:"H:i"|default:"Not marked" }}</p>
+        <p>Time Out: {{ attendance.time_out|time:"H:i"|default:"Not marked" }}</p>
+    {% else %}
+        <p>No attendance recorded today</p>
+    {% endif %}
+</div>
+
+<div class="webcam-container">
+    <h3>Face Recognition</h3>
+    <video id="webcam" width="640" height="480" autoplay></video>
+    <div id="status">Waiting for face recognition...</div>
+</div>
+
+<script>
+    // Your existing WebSocket code here
+    let ws = new WebSocket('ws://' + window.location.host + '/ws/face_recognition/');
+    
+    async function startFaceRecognition() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            const video = document.getElementById('webcam');
+            video.srcObject = stream;
+            
+            setInterval(() => {
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                
+                const frame = canvas.toDataURL('image/jpeg');
+                ws.send(JSON.stringify({
+                    frame: frame.split(',')[1]
+                }));
+            }, 1000);
+        } catch (err) {
+            document.getElementById('status').innerText = 'Error: Could not access camera';
+        }
+    }
+    
+    ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        if (data.type === 'recognition_result') {
+            if (data.success) {
+                document.getElementById('status').innerText = 
+                    `Welcome ${data.employee}! ${data.attendance_type} time recorded at ${data.time}`;
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                document.getElementById('status').innerText = data.message;
+            }
+        }
+    };
+    
+    window.onload = startFaceRecognition;
+</script>
+{% endblock %}

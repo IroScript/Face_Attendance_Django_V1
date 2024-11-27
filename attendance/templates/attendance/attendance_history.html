@@ -1,0 +1,38 @@
+{% extends 'attendance/base.html' %}
+
+{% block title %}Attendance History{% endblock %}
+
+{% block content %}
+<h2>Attendance History</h2>
+<table border="1">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Time In</th>
+            <th>Time Out</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for attendance in attendances %}
+        <tr>
+            <td>{{ attendance.date }}</td>
+            <td>{{ attendance.time_in|time:"H:i" }}</td>
+            <td>{{ attendance.time_out|time:"H:i"|default:"-" }}</td>
+            <td>
+                {% if attendance.time_in and attendance.time_out %}
+                    Complete
+                {% else %}
+                    Incomplete
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4">No attendance records found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
